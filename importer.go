@@ -57,12 +57,6 @@ func (imp *Importer) realImport(imports map[string]*types.Package, path string) 
 	// using possibly out-of-date packages, but it has the upside of
 	// not having to parse most of the Go standard library.
 
-	if imp.cycleSeen[path] {
-		return nil, fmt.Errorf("import cycle %s -> %s", strings.Join(imp.cyclesStack, " -> "), path)
-	}
-	imp.cycleSeen[path] = true
-	imp.cyclesStack = append(imp.cyclesStack, path)
-
 	imported := func(pkg *types.Package) {
 		// We don't use imports, but per API we have to add the package.
 		imports[pkg.Path()] = pkg
@@ -135,6 +129,12 @@ func (imp *Importer) realImport(imports map[string]*types.Package, path string) 
 	for _, f := range astPkg.Files {
 		ff = append(ff, f)
 	}
+
+	if imp.cycleSeen[path] {
+		return nil, fmt.Errorf("import cycle %s -> %s", strings.Join(imp.cyclesStack, " -> "), path)
+	}
+	imp.cycleSeen[path] = true
+	imp.cyclesStack = append(imp.cyclesStack, path)
 
 	context := types.Config{
 		Import: imp.realImport,
